@@ -1,78 +1,58 @@
 #!/usr/bin/env python3
-"""Splay Tree — self-adjusting BST with amortized O(log n) operations."""
+"""Splay Tree — zero-dep."""
 
-class Node:
-    __slots__ = ('key', 'val', 'left', 'right', 'parent')
-    def __init__(self, key, val=None):
-        self.key, self.val = key, val
-        self.left = self.right = self.parent = None
+class SplayNode:
+    def __init__(self, key):
+        self.key=key; self.left=self.right=None
 
 class SplayTree:
-    def __init__(self): self.root = None; self.size = 0
-    
-    def _rotate_left(self, x):
-        y = x.right; x.right = y.left
-        if y.left: y.left.parent = x
-        y.parent = x.parent
-        if not x.parent: self.root = y
-        elif x == x.parent.left: x.parent.left = y
-        else: x.parent.right = y
-        y.left = x; x.parent = y
-    
-    def _rotate_right(self, x):
-        y = x.left; x.left = y.right
-        if y.right: y.right.parent = x
-        y.parent = x.parent
-        if not x.parent: self.root = y
-        elif x == x.parent.right: x.parent.right = y
-        else: x.parent.left = y
-        y.right = x; x.parent = y
-    
-    def _splay(self, x):
-        while x.parent:
-            if not x.parent.parent:
-                if x == x.parent.left: self._rotate_right(x.parent)
-                else: self._rotate_left(x.parent)
-            elif x == x.parent.left and x.parent == x.parent.parent.left:
-                self._rotate_right(x.parent.parent); self._rotate_right(x.parent)
-            elif x == x.parent.right and x.parent == x.parent.parent.right:
-                self._rotate_left(x.parent.parent); self._rotate_left(x.parent)
-            elif x == x.parent.right and x.parent == x.parent.parent.left:
-                self._rotate_left(x.parent); self._rotate_right(x.parent)
-            else:
-                self._rotate_right(x.parent); self._rotate_left(x.parent)
-    
-    def insert(self, key, val=None):
-        if not self.root: self.root = Node(key, val); self.size += 1; return
-        node = self.root; parent = None
-        while node:
-            parent = node
-            if key < node.key: node = node.left
-            elif key > node.key: node = node.right
-            else: node.val = val; self._splay(node); return
-        new = Node(key, val); new.parent = parent
-        if key < parent.key: parent.left = new
-        else: parent.right = new
-        self._splay(new); self.size += 1
-    
-    def find(self, key):
-        node = self.root
-        while node:
-            if key < node.key: node = node.left
-            elif key > node.key: node = node.right
-            else: self._splay(node); return node.val
-        return None
-    
+    def __init__(self): self.root=None
+    def _right_rotate(self, x):
+        y=x.left; x.left=y.right; y.right=x; return y
+    def _left_rotate(self, x):
+        y=x.right; x.right=y.left; y.left=x; return y
+    def _splay(self, root, key):
+        if not root or root.key==key: return root
+        if key<root.key:
+            if not root.left: return root
+            if key<root.left.key:
+                root.left.left=self._splay(root.left.left,key)
+                root=self._right_rotate(root)
+            elif key>root.left.key:
+                root.left.right=self._splay(root.left.right,key)
+                if root.left.right: root.left=self._left_rotate(root.left)
+            return self._right_rotate(root) if root.left else root
+        else:
+            if not root.right: return root
+            if key>root.right.key:
+                root.right.right=self._splay(root.right.right,key)
+                root=self._left_rotate(root)
+            elif key<root.right.key:
+                root.right.left=self._splay(root.right.left,key)
+                if root.right.left: root.right=self._right_rotate(root.right)
+            return self._left_rotate(root) if root.right else root
+    def insert(self, key):
+        if not self.root: self.root=SplayNode(key); return
+        self.root=self._splay(self.root,key)
+        if self.root.key==key: return
+        n=SplayNode(key)
+        if key<self.root.key: n.right=self.root; n.left=self.root.left; self.root.left=None
+        else: n.left=self.root; n.right=self.root.right; self.root.right=None
+        self.root=n
+    def search(self, key):
+        self.root=self._splay(self.root,key)
+        return self.root and self.root.key==key
     def inorder(self):
-        result = []; stack = []; node = self.root
-        while stack or node:
-            while node: stack.append(node); node = node.left
-            node = stack.pop(); result.append((node.key, node.val)); node = node.right
-        return result
+        result=[]
+        def _in(n):
+            if n: _in(n.left); result.append(n.key); _in(n.right)
+        _in(self.root); return result
 
-if __name__ == "__main__":
-    st = SplayTree()
-    for k in [5, 3, 7, 1, 4, 6, 8, 2]: st.insert(k, f"v{k}")
-    print(f"Find 4: {st.find(4)} (root now: {st.root.key})")
-    print(f"Find 7: {st.find(7)} (root now: {st.root.key})")
+if __name__=="__main__":
+    st=SplayTree()
+    for k in [10,5,15,3,7,12,20]: st.insert(k)
     print(f"Inorder: {st.inorder()}")
+    st.search(7)
+    print(f"After search(7), root: {st.root.key}")
+    st.search(12)
+    print(f"After search(12), root: {st.root.key}")
