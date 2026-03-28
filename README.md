@@ -1,9 +1,11 @@
 # splay-tree2
 
-Zero-dependency Python implementation.
+Splay tree with splaying operations.
+
+Zero dependencies. Python 3.8+.
 
 ## Usage
 
 ```bash
-python3 splay_tree2.py
+python3 splay_tree2.py --help
 ```
