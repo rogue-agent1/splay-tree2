@@ -1,9 +1,9 @@
-# Splay Tree
+# splay-tree2
 
-Splay Tree — zero-dependency Python implementation.
+Splay tree with amortized O(log n). Zero-dependency, single-file Python CLI.
 
 ## Usage
 
 ```bash
-python3 splay_tree2.py
+python3 splay_tree2.py --help
 ```
